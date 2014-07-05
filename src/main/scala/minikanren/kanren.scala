@@ -22,7 +22,7 @@ object kanren {
   case class IntVal(i: Int) extends Term
   case class ListVal(l: List[Term]) extends Term
 
-  def wrapI(i: Int*) = i.map(IntVal(_)).toList
+  def wrapI(i: Int*) = i.map(IntVal).toList
   def wrapL(i: Int*) = ListVal(wrapI(i: _*))
 
   type Subst = Map[String, Term]
@@ -43,20 +43,20 @@ object kanren {
   def lookup2(v: Term, s: Subst): Term = lookup(v, s) match {
     case Var(x) => Var(x)
     case IntVal(x) => IntVal(x)
-    case ListVal(x) if (!x.isEmpty) =>
+    case ListVal(x) if x.nonEmpty =>
       if (x.tail.isEmpty) lookup2(x.head, s) else ListVal(List(lookup2(x.head, s), lookup2(ListVal(x.tail), s)))
     case ListVal(List()) => ListVal(List())
   }
 
   def unify(t1: Term, t2: Term): Subst => Nond[Subst] = { s: Subst =>
     (lookup(t1, s), lookup(t2, s)) match {
-      case (a, b) if (a == b) => succeed(s)
+      case (a, b) if a == b => succeed(s)
       case (Var(x), y) => succeed(extend(Var(x), y, s))
       case (x, Var(y)) => succeed(extend(Var(y), x, s))
-      case (ListVal(l1), ListVal(l2)) if (!l1.isEmpty && !l2.isEmpty) =>
+      case (ListVal(l1), ListVal(l2)) if l1.nonEmpty && l2.nonEmpty =>
         (l1, l2) match {
-          case (l1h :: l1t, l2h :: l2t) if (l1t.size == 1) => unify(l1h, l2h)(s).flatMap(unify(l1t.head, ListVal(l2t)))
-          case (l1h :: l1t, l2h :: l2t) if (l2t.size == 1) => unify(l1h, l2h)(s).flatMap(unify(ListVal(l1t), l2t.head))
+          case (l1h :: l1t, l2h :: l2t) if l1t.size == 1 => unify(l1h, l2h)(s).flatMap(unify(l1t.head, ListVal(l2t)))
+          case (l1h :: l1t, l2h :: l2t) if l2t.size == 1 => unify(l1h, l2h)(s).flatMap(unify(ListVal(l1t), l2t.head))
           case (l1h :: l1t, l2h :: l2t) => unify(l1h, l2h)(s).flatMap(unify(ListVal(l1t), ListVal(l2t)))
         }
       case _ => fail(s)
@@ -117,7 +117,7 @@ object kanren {
     println(as)
   }
 
-  def test1 {
+  def test1() {
     println("test1")
     println(disj(
       disj(fail[Int], succeed[Int]),
@@ -126,7 +126,7 @@ object kanren {
         disj(succeed[Int], succeed[Int])))(100))
   }
 
-  def test2 {
+  def test2() {
     val vx = Var("x")
     val vy = Var("y")
 
@@ -139,7 +139,7 @@ object kanren {
     println(lookup(vx, xy1.head))
   }
 
-  def test3 {
+  def test3() {
     val vx = Var("x")
 
     val ott = wrapI(1, 2, 3)
@@ -150,7 +150,7 @@ object kanren {
 
   }
 
-  def test4 {
+  def test4() {
     cout("common-el-1")(
       run(commonElement(wrapI(1, 2, 3), wrapI(3, 4, 5))))
     cout("common-el-2")(
@@ -159,7 +159,7 @@ object kanren {
       run(commonElement(wrapI(11, 2, 3), wrapI(13, 4, 1, 7))))
   }
 
-  def testCo {
+  def testCo() {
     val vx = Var("x")
     val vy = Var("y")
 
@@ -168,7 +168,7 @@ object kanren {
 
   }
 
-  def testAp {
+  def testAp() {
     val vx = Var("x")
     val vy = Var("y")
     val vq = Var("q")
